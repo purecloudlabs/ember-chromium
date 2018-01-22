@@ -1,0 +1,15 @@
+{
+  "author": "Garrett Jensen",
+  "title": "ember-chromium",
+  "logo_url": "",
+  "categories": [
+    "test-utility"
+  ],
+  "tags": [
+    "ember",
+    "chromium"
+  ],
+  "apis": [
+    "platform"
+  ]
+}

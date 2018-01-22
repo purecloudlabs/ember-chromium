@@ -1,0 +1,16 @@
+{
+  "name": "ember-chromium",
+  "version": "1.0.0",
+  "description": "One place to hold all the logic to download and run ember tests in chromium",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "jensengar",
+  "license": "MIT",
+  "devDependencies": {
+    "extract-zip": "^1.6.6",
+    "got": "^8.0.3",
+    "tmp": "0.0.33"
+  }
+}
