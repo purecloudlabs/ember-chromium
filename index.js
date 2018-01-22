@@ -9,7 +9,8 @@ const utils = require('./utils');
 
 let defaultChromiumArgs = [
   "--disable-gpu",
-  "--remote-debugging-port=9222"
+  "--remote-debugging-port=9222",
+  "--no-sandbox"
 ];
 
 function getTestemConfig(chromiumArgs) {
