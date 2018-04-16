@@ -7,7 +7,7 @@ In your `package.json`, add a postinstall hook to run the download chromium scri
 ```
 "scripts": {
   ...
-  "postinstall": "npm run install-chromium",
+  "pretest": "npm run install-chromium",
   "install-chromium": "node node_modules/ember-chromium/download-chrome.js"
 }
 ```
