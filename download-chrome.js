@@ -14,7 +14,7 @@ const config = require('./config');
 const utils = require('./utils');
 
 // Check out this issue https://github.com/dtolstyi/node-chromium/issues/1#issuecomment-354456135
-const npmPackage = process.env.CHROMIUM_VERSION || '62.0.0';
+const npmPackage = process.env.CHROMIUM_VERSION || '67.0.0';
 let versionsWithUnknownBranchingPoint = [];
 
 function getOsCdnUrl() {
@@ -63,7 +63,7 @@ function getCurrentOs() {
 
 function getExactChromeVersionNumber() {
   return new Promise((resolve, reject) => {
-    const url = 'https://omahaproxy.appspot.com/history.json?channel=stable&os=' + getCurrentOs();
+    const url = 'https://omahaproxy.appspot.com/history.json?channel=' + (process.env.CHROMIUM_CHANNEL || 'dev') + '&os=' + getCurrentOs();
     const packageMajorVersion = npmPackage.split('.')[0];
 
     got(url)
