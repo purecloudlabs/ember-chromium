@@ -134,7 +134,7 @@ function createTempFile () {
   });
 }
 
-async function downloadChromiumRevision (revision) {
+function downloadChromiumRevision (revision) {
   return new Promise((resolve, reject) => {
     createTempFile()
       .then(path => {
