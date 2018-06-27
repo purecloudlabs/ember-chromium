@@ -3,9 +3,8 @@
 
 'use strict';
 
-const fs = require('fs');
-
 const utils = require('./utils');
+const fs = require('fs');
 
 let defaultChromiumArgs = [
   "--disable-gpu",
@@ -13,13 +12,13 @@ let defaultChromiumArgs = [
   "--no-sandbox"
 ];
 
-function getTestemConfig(chromiumArgs) {
+function getTestemConfig (chromiumArgs) {
   if (!chromiumArgs) {
     chromiumArgs = defaultChromiumArgs;
   }
 
-  const chromiumPath = utils.getBinaryPath();
-  if (!chromiumPath) {
+  const {execPath} = utils.getBinaryPath();
+  if (!fs.existsSync(execPath)) {
     console.error('Chromium does not appear to be installed, testem cannot run.'); // eslint-disable-line
     process.exit(1); // for some reason this doesn't stop testem from continuing in server mode
     throw new Error('Chromium not installed');
@@ -30,20 +29,20 @@ function getTestemConfig(chromiumArgs) {
     browser_start_timeout: 60,
     launchers: {
       chromium: {
-        exe: chromiumPath,
+        exe: execPath,
         args: chromiumArgs,
         protocol: 'browser'
       },
       chromium_headless: {
-        exe: chromiumPath,
+        exe: execPath,
         args: ['--headless', ...chromiumArgs],
         protocol: 'browser'
       }
     },
 
     launch_in_ci: ['chromium_headless'],
-    launch_in_dev: ['chromium'],
-  }
+    launch_in_dev: ['chromium']
+  };
 }
 
 module.exports = {

@@ -1,7 +1,7 @@
 /* global require */
 /* eslint no-console: 0 */
 
-const chrome = require('./scripts/index/');
+const chrome = require('./index/');
 
 if (chrome.path) {
   console.log('Chrome is already installed');
