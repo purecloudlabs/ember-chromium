@@ -10,14 +10,13 @@ const extractZip = require('extract-zip');
 const got = require('got');
 const tmp = require('tmp');
 
-const config = require('./config');
 const utils = require('./utils');
 
 // Check out this issue https://github.com/dtolstyi/node-chromium/issues/1#issuecomment-354456135
 const npmPackage = process.env.CHROMIUM_VERSION || '67.0.0';
 let versionsWithUnknownBranchingPoint = [];
 
-function getOsCdnUrl() {
+function getOsCdnUrl () {
   let url = 'https://www.googleapis.com/download/storage/v1/b/chromium-browser-snapshots/o/';
 
   const platform = process.platform;
@@ -42,7 +41,7 @@ function getOsCdnUrl() {
   return url;
 }
 
-function getCurrentOs() {
+function getCurrentOs () {
   const platform = process.platform;
 
   if (platform === 'linux') {
@@ -61,7 +60,7 @@ function getCurrentOs() {
   throw new Error('Unsupported platform');
 }
 
-function getExactChromeVersionNumber() {
+function getExactChromeVersionNumber () {
   return new Promise((resolve, reject) => {
     const url = 'https://omahaproxy.appspot.com/history.json?channel=' + (process.env.CHROMIUM_CHANNEL || 'dev') + '&os=' + getCurrentOs();
     const packageMajorVersion = npmPackage.split('.')[0];
@@ -82,18 +81,20 @@ function getExactChromeVersionNumber() {
             continue;
           }
 
-          resolve(versionNumber);
+          return resolve(versionNumber);
         }
       }
       )
       .catch(err => {
+        console.log('custom loggin');
+        console.error(err);
         console.log('An error occured while trying to retrieve latest revision number', err);
         reject(err);
       });
   });
 }
 
-function getChromiumBranchingPoint(versionNumber) {
+function getChromiumBranchingPoint (versionNumber) {
   return new Promise((resolve, reject) => {
     const url = 'https://omahaproxy.appspot.com/deps.json?version=' + versionNumber;
 
@@ -117,11 +118,10 @@ function getChromiumBranchingPoint(versionNumber) {
         console.log('Could not get build details for version ' + versionNumber);
         reject(err);
       });
-
   });
 }
 
-function createTempFile() {
+function createTempFile () {
   return new Promise((resolve, reject) => {
     tmp.file((error, path) => {
       if (error) {
@@ -134,7 +134,7 @@ function createTempFile() {
   });
 }
 
-function downloadChromiumRevision(revision) {
+async function downloadChromiumRevision (revision) {
   return new Promise((resolve, reject) => {
     createTempFile()
       .then(path => {
@@ -159,7 +159,7 @@ function downloadChromiumRevision(revision) {
   });
 }
 
-function unzipArchive(archivePath, outputFolder) {
+function unzipArchive (archivePath, outputFolder) {
   console.log('Started extracting archive', archivePath);
   return new Promise((resolve, reject) => {
     extractZip(archivePath, { dir: outputFolder }, error => {
@@ -175,15 +175,18 @@ function unzipArchive(archivePath, outputFolder) {
 }
 
 module.exports = (function () {
-  const chromiumPath = utils.getBinaryPath();
-  if (chromiumPath) {
+  const {execPath, binPath} = utils.getBinaryPath();
+
+  const exists = fs.existsSync(execPath);
+
+  if (exists) {
     console.log('Chrome is already installed');
   } else {
     console.log('Chrome is not installed, triggering download');
     return getExactChromeVersionNumber()
       .then(getChromiumBranchingPoint)
       .then(downloadChromiumRevision)
-      .then(path => unzipArchive(path, config.BIN_OUT_PATH))
+      .then(path => unzipArchive(path, binPath))
       .catch(err => console.error('An error occurred while trying to setup Chromium. Resolve all issues and restart the process', err));
   }
 })();

@@ -1,9 +1,10 @@
 {
   "name": "ember-chromium",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "One place to hold all the logic to download and run ember tests in chromium",
   "main": "index.js",
   "scripts": {
+    "postinstall": "node download-chrome.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "jensengar",
