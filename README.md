@@ -3,16 +3,26 @@
 Ember chromium is an easy way to download chromium in your project and run your unit/integration tests through it. It will also run headless by default on CI servers.
 
 ## Getting Started
-In your `package.json`, add a postinstall hook to run the download chromium script:
-```
-"scripts": {
-  ...
-  "pretest": "npm run install-chromium",
-  "install-chromium": "node node_modules/ember-chromium/download-chrome.js"
-}
-```
-then simply run `npm install` on your project.
+1. Install ember-chromium as a dev dependency via npm/yarn
+    ```sh
+    $ npm install ember-chromium --save-dev
+    # -or-
+    $ yarn add ember-chromium --dev
+    ```
 
+
+1. In your `package.json`, add a `pretest` script to run the `install-chromium` script.
+
+    ```json
+    "scripts": {
+      // ...
+      "pretest": "npm run install-chromium",
+      // -or-
+      "pretest": "yarn run install-chromium",
+    }
+    ````
+
+    [Note:] When installed, ember-chromium links the `install-chromium` script into `<project-root>/node-modules/.bin`.  This directory is on the npm/yarn script path and can be called directly.
 
 ## Usage
 You can run just the default behavior by doing the following in testem.js:
