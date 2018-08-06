@@ -3,6 +3,9 @@
   "version": "3.0.1",
   "description": "One place to hold all the logic to download and run ember tests in chromium",
   "main": "index.js",
+  "bin": {
+    "install-chromium": "download-chrome.js"
+  },
   "scripts": {
     "postinstall": "node download-chrome.js",
     "test": "echo \"Error: no test specified\" && exit 1"
