@@ -60,32 +60,38 @@ function getExactChromeVersionNumber () {
 }
 
 function getBinaryPath () {
-  return getExactChromeVersionNumber()
-    .then(versionNumber => {
-      const buffer = childProcess.execSync('npm bin -g');
-      const result = String.fromCharCode.apply(null, buffer);
-      const globalPath = result.replace(/\n$/, '');
-      let binPath = path.join(globalPath, 'ember-chromium', versionNumber);
-      let execPath;
+  // run async function synchronously because testem doesn't like async configs
+  // I'm not proud of this but it works.
+  const versionBuffer = childProcess.execSync(`
+    node -e "
+      require('ember-chromium/utils').getExactChromeVersionNumber()
+      .then(v => process.stdout.write(v))
+    "
+  `);
+  const versionNumber = String.fromCharCode.apply(null, versionBuffer);
+  const buffer = childProcess.execSync('npm bin -g');
+  const result = String.fromCharCode.apply(null, buffer);
+  const globalPath = result.replace(/\n$/, '');
+  let binPath = path.join(globalPath, 'ember-chromium', versionNumber);
+  let execPath;
 
-      const platform = process.platform;
-      const folderName = getOsChromiumFolderName();
+  const platform = process.platform;
+  const folderName = getOsChromiumFolderName();
 
-      if (platform === 'linux') {
-        execPath = path.join(binPath, folderName, 'chrome');
-      } else if (platform === 'win32') {
-        execPath = path.join(binPath, folderName, 'chrome.exe');
-      } else if (platform === 'darwin') {
-        execPath = path.join(binPath, folderName, 'Chromium.app/Contents/MacOS/Chromium');
-      } else {
-        console.error('Unsupported platform or architecture found:', process.platform, process.arch);
-        throw new Error('Unsupported platform');
-      }
+  if (platform === 'linux') {
+    execPath = path.join(binPath, folderName, 'chrome');
+  } else if (platform === 'win32') {
+    execPath = path.join(binPath, folderName, 'chrome.exe');
+  } else if (platform === 'darwin') {
+    execPath = path.join(binPath, folderName, 'Chromium.app/Contents/MacOS/Chromium');
+  } else {
+    console.error('Unsupported platform or architecture found:', process.platform, process.arch);
+    throw new Error('Unsupported platform');
+  }
 
-      console.log(`checking for chromium at: ${execPath.toString()}`);
+  console.log(`checking for chromium at: ${execPath.toString()}`);
 
-      return {binPath, execPath, versionNumber};
-    });
+  return {binPath, execPath, versionNumber};
 }
 
 function getChromiumBranchingPoint (versionNumber) {
@@ -130,5 +136,6 @@ function getOsChromiumFolderName () {
 module.exports = {
   getBinaryPath,
   getOsChromiumFolderName,
-  getChromiumBranchingPoint
+  getChromiumBranchingPoint,
+  getExactChromeVersionNumber
 };
