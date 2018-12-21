@@ -12,10 +12,6 @@ const tmp = require('tmp');
 
 const utils = require('./utils');
 
-// Check out this issue https://github.com/dtolstyi/node-chromium/issues/1#issuecomment-354456135
-const npmPackage = process.env.CHROMIUM_VERSION || '67.0.0';
-let versionsWithUnknownBranchingPoint = [];
-
 function getOsCdnUrl () {
   let url = 'https://www.googleapis.com/download/storage/v1/b/chromium-browser-snapshots/o/';
 
@@ -39,86 +35,6 @@ function getOsCdnUrl () {
   }
 
   return url;
-}
-
-function getCurrentOs () {
-  const platform = process.platform;
-
-  if (platform === 'linux') {
-    return 'linux';
-  }
-
-  if (platform === 'win32') {
-    return 'win';
-  }
-
-  if (platform === 'darwin') {
-    return 'mac';
-  }
-
-  console.log('Unknown platform found:', process.platform);
-  throw new Error('Unsupported platform');
-}
-
-function getExactChromeVersionNumber () {
-  return new Promise((resolve, reject) => {
-    const url = 'https://omahaproxy.appspot.com/history.json?channel=' + (process.env.CHROMIUM_CHANNEL || 'dev') + '&os=' + getCurrentOs();
-    const packageMajorVersion = npmPackage.split('.')[0];
-
-    got(url)
-      .then(response => {
-        let versions = JSON.parse(response.body);
-
-        for (let version of versions) {
-          let versionNumber = version.version;
-          let buildMajorVersion = versionNumber.split('.')[0];
-
-          if (buildMajorVersion !== packageMajorVersion) {
-            continue;
-          }
-
-          if (versionsWithUnknownBranchingPoint.includes(versionNumber)) {
-            continue;
-          }
-
-          return resolve(versionNumber);
-        }
-      }
-      )
-      .catch(err => {
-        console.log('custom loggin');
-        console.error(err);
-        console.log('An error occured while trying to retrieve latest revision number', err);
-        reject(err);
-      });
-  });
-}
-
-function getChromiumBranchingPoint (versionNumber) {
-  return new Promise((resolve, reject) => {
-    const url = 'https://omahaproxy.appspot.com/deps.json?version=' + versionNumber;
-
-    got(url)
-      .then(response => {
-        let versionDetails = JSON.parse(response.body);
-        let branchingPoint = parseInt(versionDetails.chromium_base_position);
-
-        if (!Number.isInteger(branchingPoint)) {
-          console.log('Could not find branching point for Chrome ' + versionNumber + '. This can happen when the new Chrome version is just branched off. Let\'s try to find the branching point for one version earlier.');
-          versionsWithUnknownBranchingPoint.push(versionNumber);
-
-          resolve(getExactChromeVersionNumber().then(getChromiumBranchingPoint));
-        }
-
-        console.log('Found that Chrome ' + versionNumber + ' was branched off Chromium at point ' + branchingPoint);
-
-        resolve(branchingPoint);
-      })
-      .catch(err => {
-        console.log('Could not get build details for version ' + versionNumber);
-        reject(err);
-      });
-  });
 }
 
 function createTempFile () {
@@ -175,18 +91,17 @@ function unzipArchive (archivePath, outputFolder) {
 }
 
 module.exports = (function () {
-  const {execPath, binPath} = utils.getBinaryPath();
+  return utils.getBinaryPath().then(({execPath, binPath, versionNumber }) => {
+    const exists = fs.existsSync(execPath);
 
-  const exists = fs.existsSync(execPath);
-
-  if (exists) {
-    console.log('Chrome is already installed');
-  } else {
-    console.log('Chrome is not installed, triggering download');
-    return getExactChromeVersionNumber()
-      .then(getChromiumBranchingPoint)
-      .then(downloadChromiumRevision)
-      .then(path => unzipArchive(path, binPath))
-      .catch(err => console.error('An error occurred while trying to setup Chromium. Resolve all issues and restart the process', err));
-  }
+    if (exists) {
+      console.log('Chrome is already installed');
+    } else {
+      console.log('Chrome is not installed, triggering download');
+      return utils.getChromiumBranchingPoint(versionNumber)
+        .then(downloadChromiumRevision)
+        .then(path => unzipArchive(path, binPath))
+        .catch(err => console.error('An error occurred while trying to setup Chromium. Resolve all issues and restart the process', err));
+    }
+  });
 })();
