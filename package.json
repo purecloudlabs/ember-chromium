@@ -6,6 +6,7 @@
   "bin": {
     "install-chromium": "download-chrome.js"
   },
+  "publishConfig": { "registry": "https://registry.npmjs.org" },
   "scripts": {
     "postinstall": "node download-chrome.js",
     "test": "echo \"Error: no test specified\" && exit 1"
