@@ -25,7 +25,7 @@ function getCurrentOs () {
   throw new Error('Unsupported platform');
 }
 
-const version = process.env.CHROMIUM_VERSION || '67.0.0';
+const version = process.env.CHROMIUM_VERSION || '76.0.0';
 const versionsWithUnknownBranchingPoint = [];
 function getExactChromeVersionNumber () {
   return new Promise((resolve, reject) => {
