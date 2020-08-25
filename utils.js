@@ -4,6 +4,10 @@ const path = require('path');
 const got = require('got');
 const childProcess = require('child_process');
 
+const REQUESTED_VERSION = process.env.CHROMIUM_VERSION || '86.0.0';
+const REQUESTED_CHANNEL = process.env.CHROMIUM_CHANNEL || 'dev';
+const versionsWithUnknownBranchingPoint = [];
+
 function getCurrentOs () {
   const platform = process.platform;
 
@@ -23,12 +27,10 @@ function getCurrentOs () {
   throw new Error('Unsupported platform');
 }
 
-const version = process.env.CHROMIUM_VERSION || '76.0.0';
-const versionsWithUnknownBranchingPoint = [];
 function getExactChromeVersionNumber () {
   return new Promise((resolve, reject) => {
-    const url = 'https://omahaproxy.appspot.com/history.json?channel=' + (process.env.CHROMIUM_CHANNEL || 'dev') + '&os=' + getCurrentOs();
-    const packageMajorVersion = version.split('.')[0];
+    const url = 'https://omahaproxy.appspot.com/history.json?channel=' + REQUESTED_CHANNEL + '&os=' + getCurrentOs();
+    const packageMajorVersion = REQUESTED_VERSION.split('.')[0];
 
     got(url)
       .then(response => {
@@ -61,12 +63,15 @@ function getBinaryPath () {
   // run async function synchronously because testem doesn't like async configs
   // I'm not proud of this but it works.
   const versionBuffer = childProcess.execSync(`
-    node -e "
+    CHROMIUM_CHANNEL=${REQUESTED_CHANNEL} CHROMIUM_VERSION=${REQUESTED_VERSION} node -e "
       require('ember-chromium/utils').getExactChromeVersionNumber()
       .then(v => process.stdout.write(v))
     "
   `);
   const versionNumber = String.fromCharCode.apply(null, versionBuffer);
+  if (!versionNumber) {
+    throw new Error(`Failed to locate an official chromium release with major version matching ${REQUESTED_VERSION} in the ${REQUESTED_CHANNEL} channel`);
+  }
   const buffer = childProcess.execSync('npm bin -g');
   const result = String.fromCharCode.apply(null, buffer);
   const globalPath = result.replace(/\n$/, '');
