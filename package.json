@@ -1,6 +1,6 @@
 {
   "name": "ember-chromium",
-  "version": "4.0.4",
+  "version": "5.0.0",
   "description": "One place to hold all the logic to download and run ember tests in chromium",
   "main": "index.js",
   "bin": {
