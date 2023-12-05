@@ -91,7 +91,7 @@ function unzipArchive (archivePath, outputFolder) {
 }
 
 module.exports = (function () {
-  const { execPath, binPath, versionNumber } = utils.getBinaryPath();
+  const { execPath, binPath } = utils.getBinaryPath();
   const exists = fs.existsSync(execPath);
 
   if (exists) {

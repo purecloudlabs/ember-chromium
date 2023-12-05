@@ -4,7 +4,6 @@ const path = require('path');
 const got = require('got');
 const childProcess = require('child_process');
 
-// HEADS UP: min supported by chromiumdash is 94
 const REQUESTED_VERSION = process.env.CHROMIUM_VERSION || '121.0.6156.3';
 const REQUESTED_CHANNEL = process.env.CHROMIUM_CHANNEL || 'dev';
 const versionsWithUnknownBranchingPoint = [];
@@ -35,7 +34,7 @@ function getReleaseWithBranchingPoint(channel, platform, version) {
       reject('Unable to determine request major chromium version');
     }
 
-    const url = `https://chromiumdash.appspot.com/fetch_releases?channel${channel}&platform=${platform}\&num\=10\&offset\=0\&milestone\=${majorVersion}`;
+    const url = `https://chromiumdash.appspot.com/fetch_milestones?only_branched=true&mstone=${majorVersion}`
 
     got(url)
       .then(response => {
@@ -43,15 +42,15 @@ function getReleaseWithBranchingPoint(channel, platform, version) {
 
         for (let version of versions) {
           if (version.milestone === majorVersion &&
-            version.version.indexOf(majorVersion + '.') === 0 &&
             version.chromium_main_branch_position) {
             let branchingPoint = parseInt(version.chromium_main_branch_position, 10);
 
             if (Number.isInteger(branchingPoint)) {
               resolve({
-                version: version.version,
-                branchingPoint
+                milestone: version.milestone,
+                branchingPoint: branchingPoint
               });
+              return;
             }
           }
         }
@@ -59,7 +58,6 @@ function getReleaseWithBranchingPoint(channel, platform, version) {
         reject(`No branching point found for ${channel}, ${platform}, ${majorVersion} (${version})`)
       })
       .catch(err => {
-        console.log('An error occured while trying to retrieve latest revision number', err);
         reject(err);
       });
   });
@@ -74,11 +72,16 @@ function getMajorVersion(versionString) {
   return null;
 }
 
+// Note: this is invoked in getBinaryPath so nothing in the call stack can write stdout (i.e. no console.log).  Don't shoot the messenger.
 function getExactChromeVersionNumber() {
   return getReleaseWithBranchingPoint(REQUESTED_CHANNEL, getCurrentOs(), REQUESTED_VERSION).then(releaseDetails => {
     if (releaseDetails) {
-      return releaseDetails.version;
+      // chromiumdash no loger provides the version and branchingPoint in the same endpoint (or joinable endpoints)
+      // using the milestone and branchingPoint to create a unique "version" for installation purposes
+      return releaseDetails.milestone + '_' + releaseDetails.branchingPoint
     }
+  }).catch(err => {
+    return '';
   });
 }
 
@@ -86,11 +89,15 @@ function getBinaryPath () {
   // run async function synchronously because testem doesn't like async configs
   // I'm not proud of this but it works.
   const versionBuffer = childProcess.execSync(`
-    CHROMIUM_CHANNEL=${REQUESTED_CHANNEL} CHROMIUM_VERSION=${REQUESTED_VERSION} node -e "
+    CHROMIUM_CHANNEL="${REQUESTED_CHANNEL}" CHROMIUM_VERSION="${REQUESTED_VERSION}" node -e "
       require('ember-chromium/utils').getExactChromeVersionNumber()
       .then(v => process.stdout.write(v))
+      .catch(err => {
+        process.stdout.write('');
+      })
     "
   `);
+
   const versionNumber = String.fromCharCode.apply(null, versionBuffer);
   if (!versionNumber) {
     throw new Error(`Failed to locate an official chromium release with major version matching ${REQUESTED_VERSION} in the ${REQUESTED_CHANNEL} channel`);
@@ -117,7 +124,7 @@ function getBinaryPath () {
 
   console.log(`checking for chromium at: ${execPath.toString()}`);
 
-  return {binPath, execPath, versionNumber};
+  return {binPath, execPath};
 }
 
 function getChromiumBranchingPoint() {
