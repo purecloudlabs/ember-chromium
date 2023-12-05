@@ -98,7 +98,7 @@ module.exports = (function () {
     console.log('Chrome is already installed');
   } else {
     console.log('Chrome is not installed, triggering download');
-    return utils.getChromiumBranchingPoint(versionNumber)
+    return utils.getChromiumBranchingPoint()
       .then(downloadChromiumRevision)
       .then(path => unzipArchive(path, binPath))
       .catch(err => console.error('An error occurred while trying to setup Chromium. Resolve all issues and restart the process', err));
