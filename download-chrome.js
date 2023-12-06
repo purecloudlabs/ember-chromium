@@ -91,14 +91,14 @@ function unzipArchive (archivePath, outputFolder) {
 }
 
 module.exports = (function () {
-  const { execPath, binPath, versionNumber } = utils.getBinaryPath();
+  const { execPath, binPath } = utils.getBinaryPath();
   const exists = fs.existsSync(execPath);
 
   if (exists) {
     console.log('Chrome is already installed');
   } else {
     console.log('Chrome is not installed, triggering download');
-    return utils.getChromiumBranchingPoint(versionNumber)
+    return utils.getChromiumBranchingPoint()
       .then(downloadChromiumRevision)
       .then(path => unzipArchive(path, binPath))
       .catch(err => console.error('An error occurred while trying to setup Chromium. Resolve all issues and restart the process', err));
