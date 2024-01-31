@@ -102,24 +102,31 @@ function getBinaryPath () {
   if (!versionNumber) {
     throw new Error(`Failed to locate an official chromium release with major version matching ${REQUESTED_VERSION} in the ${REQUESTED_CHANNEL} channel`);
   }
-  const buffer = childProcess.execSync('npm bin -g');
+
+  const platform = getCurrentOs();
+  const searchCommand = platform === 'win' ? 'gcm' : 'which'
+  const buffer = childProcess.execSync(`${searchCommand} npm`);
   const result = String.fromCharCode.apply(null, buffer);
-  const globalPath = result.replace(/\n$/, '');
+  let npmGlobalPath = result.replace(/\n$/, '').split('/');
+  const globalPath = npmGlobalPath.slice(0, npmGlobalPath.length - 1).join('/');
   let binPath = path.join(globalPath, 'ember-chromium', versionNumber);
   let execPath;
 
-  const platform = process.platform;
   const folderName = getOsChromiumFolderName();
 
-  if (platform === 'linux') {
-    execPath = path.join(binPath, folderName, 'chrome');
-  } else if (platform === 'win32') {
-    execPath = path.join(binPath, folderName, 'chrome.exe');
-  } else if (platform === 'darwin') {
-    execPath = path.join(binPath, folderName, 'Chromium.app/Contents/MacOS/Chromium');
-  } else {
-    console.error('Unsupported platform or architecture found:', process.platform, process.arch);
-    throw new Error('Unsupported platform');
+  switch(platform) {
+    case 'linux':
+      execPath = path.join(binPath, folderName, 'chrome');
+      break;
+    case 'win':
+      execPath = path.join(binPath, folderName, 'chrome.exe');
+      break;
+    case 'mac':
+      execPath = path.join(binPath, folderName, 'Chromium.app/Contents/MacOS/Chromium');
+      break;
+    default:
+      console.error('Unsupported platform or architecture found:', process.platform, process.arch);
+      throw new Error('Unsupported platform');
   }
 
   console.log(`checking for chromium at: ${execPath.toString()}`);
