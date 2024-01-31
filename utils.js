@@ -104,12 +104,26 @@ function getBinaryPath () {
   }
 
   const platform = getCurrentOs();
-  const searchCommand = platform === 'win' ? 'gcm' : 'which'
-  const buffer = childProcess.execSync(`${searchCommand} npm`);
-  const result = String.fromCharCode.apply(null, buffer);
-  let npmGlobalPath = result.replace(/\n$/, '').split('/');
-  const globalPath = npmGlobalPath.slice(0, npmGlobalPath.length - 1).join('/');
-  let binPath = path.join(globalPath, 'ember-chromium', versionNumber);
+
+
+  let buffer;
+  let binPath;
+
+  // This is a lazy fix for newer node versions on unix.  Was having problems testing on windows, and most of our devs are not using windows
+  if (platform === 'win') {
+    buffer = childProcess.execSync('npm bin -g');
+    const result = String.fromCharCode.apply(null, buffer);
+    const globalPath = result.replace(/\n$/, '');
+    binPath = path.join(globalPath, 'ember-chromium', versionNumber);
+  } else {
+    buffer = childProcess.execSync('which npm');
+    const result = String.fromCharCode.apply(null, buffer);
+    const npmGlobalPath = result.replace(/\n$/, '').split('/');
+    const globalPath = npmGlobalPath.slice(0, npmGlobalPath.length - 1).join('/');
+    binPath = path.join(globalPath, 'ember-chromium', versionNumber);
+  }
+
+
   let execPath;
 
   const folderName = getOsChromiumFolderName();
