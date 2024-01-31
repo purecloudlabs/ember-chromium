@@ -105,7 +105,6 @@ function getBinaryPath () {
 
   const platform = getCurrentOs();
 
-
   let buffer;
   let binPath;
 
@@ -123,9 +122,7 @@ function getBinaryPath () {
     binPath = path.join(globalPath, 'ember-chromium', versionNumber);
   }
 
-
   let execPath;
-
   const folderName = getOsChromiumFolderName();
 
   switch(platform) {
